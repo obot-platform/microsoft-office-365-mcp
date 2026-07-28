@@ -35,9 +35,9 @@ async def health_check(request: Request):
     return JSONResponse({"status": "healthy"})
 
 
-# Server composition - import group tools
+# Server composition - mount group tools
 def setup_server():
-    """Setup server composition by importing group tools."""
+    """Set up server composition by mounting group tools."""
     mcp.mount(group_mcp)
 
 
@@ -437,7 +437,7 @@ mcp.disable(names={"download_attachment"})
 
 
 def streamable_http_server():
-    """Main entry point for the Gmail MCP server."""
+    """Main entry point for the Outlook MCP server."""
     setup_server()
     mcp.run(
         transport="streamable-http",  # fixed to streamable-http
