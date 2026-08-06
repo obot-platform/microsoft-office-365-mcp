@@ -443,7 +443,7 @@ def streamable_http_server():
         transport="streamable-http",  # fixed to streamable-http
         host="0.0.0.0",
         port=9000,
-        path="/mcp/outlook",
+        path="/mcp/outlook/",
     )
 
 
