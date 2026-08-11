@@ -67,5 +67,6 @@ class StreamableHTTPServerTest(TestCase):
 
         self.assertEqual(len({response.status_code for response in responses}), 1)
         for response in responses:
+            self.assertNotEqual(response.status_code, 404)
             self.assertFalse(300 <= response.status_code < 400)
             self.assertNotIn("location", response.headers)
