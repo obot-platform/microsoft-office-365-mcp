@@ -23,12 +23,16 @@ import (
 
 var httpAddr = flag.String("http", ":9000", "HTTP address to listen on for streamable HTTP server")
 
-// normalizeRootTrailingSlashes prevents net/http from redirecting legacy OAuth
-// proxy requests that append extra slashes to the root MCP endpoint.
-func normalizeRootTrailingSlashes(next http.Handler) http.Handler {
+// normalizeTrailingSlashes prevents net/http from redirecting legacy OAuth
+// proxy requests that append slashes to the MCP endpoint.
+func normalizeTrailingSlashes(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Trim(r.URL.Path, "/") == "" {
-			r.URL.Path = "/"
+		path := strings.TrimRight(r.URL.Path, "/")
+		if path == "" {
+			path = "/"
+		}
+		if path != r.URL.Path {
+			r.URL.Path = path
 			r.URL.RawPath = ""
 		}
 		next.ServeHTTP(w, r)
@@ -485,7 +489,7 @@ func main() {
 		// Handle all other paths with MCP handler
 		mux.Handle("/", mcpHandler)
 
-		if err := http.ListenAndServe(*httpAddr, normalizeRootTrailingSlashes(mux)); err != nil {
+		if err := http.ListenAndServe(*httpAddr, normalizeTrailingSlashes(mux)); err != nil {
 			log.Fatal(err)
 		}
 	} else {

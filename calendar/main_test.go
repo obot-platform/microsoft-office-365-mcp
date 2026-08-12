@@ -6,19 +6,31 @@ import (
 	"testing"
 )
 
-func TestNormalizeRootTrailingSlashes(t *testing.T) {
-	for _, path := range []string{"/", "//", "///"} {
-		t.Run(path, func(t *testing.T) {
+func TestNormalizeTrailingSlashes(t *testing.T) {
+	tests := []struct {
+		path string
+		want string
+	}{
+		{path: "/", want: "/"},
+		{path: "//", want: "/"},
+		{path: "///", want: "/"},
+		{path: "/mcp", want: "/mcp"},
+		{path: "/mcp/", want: "/mcp"},
+		{path: "/mcp//", want: "/mcp"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
 			mux := http.NewServeMux()
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/" {
-					t.Errorf("handler path = %q, want /", r.URL.Path)
+				if r.URL.Path != tt.want {
+					t.Errorf("handler path = %q, want %q", r.URL.Path, tt.want)
 				}
 				w.WriteHeader(http.StatusNoContent)
 			})
 
 			recorder := httptest.NewRecorder()
-			normalizeRootTrailingSlashes(mux).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://example.com"+path, nil))
+			normalizeTrailingSlashes(mux).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://example.com"+tt.path, nil))
 
 			if recorder.Code != http.StatusNoContent {
 				t.Errorf("status = %d, want %d", recorder.Code, http.StatusNoContent)
