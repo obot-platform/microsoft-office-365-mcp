@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,13 +32,23 @@ var httpAddr = flag.String("http", ":9000", "HTTP address to listen on for strea
 // proxy requests that append slashes to the MCP endpoint.
 func normalizeTrailingSlashes(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimRight(r.URL.Path, "/")
+		escapedPath := r.URL.EscapedPath()
+		path := strings.TrimRight(escapedPath, "/")
 		if path == "" {
 			path = "/"
 		}
-		if path != r.URL.Path {
-			r.URL.Path = path
-			r.URL.RawPath = ""
+		if path != escapedPath {
+			decodedPath, err := url.PathUnescape(path)
+			if err != nil {
+				http.Error(w, "invalid URL path", http.StatusBadRequest)
+				return
+			}
+			r.URL.Path = decodedPath
+			if path == decodedPath {
+				r.URL.RawPath = ""
+			} else {
+				r.URL.RawPath = path
+			}
 		}
 		next.ServeHTTP(w, r)
 	})
